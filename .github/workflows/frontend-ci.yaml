@@ -1,0 +1,130 @@
+name: Frontend Continuous Integration
+
+on:
+  workflow_dispatch: 
+    inputs:
+      my-input: 
+        description: 'Optional description'
+        required: false
+        default: 'default-value'
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  LINT-JOB:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.14.2-alpine3.17]
+    steps:
+      - uses: actions/checkout@v3
+
+      # Restore cache
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/cache
+          key: ${{ runner.os }}-frontend-dependencies-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-dependencies-
+      
+      # Install dependencies
+      - run: cd starter/frontend && npm install
+      
+      # Cache dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/cache
+          key: ${{ runner.os }}-frontend-dependencies-${{ hashFiles('starter/frontend/package-lock.json') }}
+
+      # Run linter
+      - run: cd starter/frontend && npm run lint
+
+      # Send a completion message
+      - run: |
+          echo "Hello ${{ github.actor }}, LINT-JOB completed."
+
+  TEST-JOB:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.14.2-alpine3.17]
+    steps:
+      - uses: actions/checkout@v3
+
+      # Restore cache
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/cache
+          key: ${{ runner.os }}-frontend-dependencies-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-dependencies-
+      
+      # Install dependencies
+      - run: cd starter/frontend && npm install
+      
+      # Cache dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/cache
+          key: ${{ runner.os }}-frontend-dependencies-${{ hashFiles('starter/frontend/package-lock.json') }}
+
+      # Run tests
+      - run: cd starter/frontend && npm test 
+
+      # Send a completion message
+      - run: |
+          echo "Hello ${{ github.actor }}, TEST-JOB completed."
+
+  BUILD-JOB:
+    runs-on: ubuntu-latest
+
+    needs: 
+      - LINT-JOB
+      - TEST-JOB
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      # Restore cache
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/cache
+          key: ${{ runner.os }}-frontend-dependencies-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-dependencies-
+      
+      # Install dependencies
+      - run:  cd starter/frontend && npm install
+      
+      # Cache dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with: 
+          path: starter/frontend/cache
+          key: ${{ runner.os }}-frontend-dependencies-${{ hashFiles('starter/frontend/package-lock.json') }}
+
+      # Build and push Docker image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Login to container registry
+        uses: docker/login-action@v2
+        with:
+            username: ${{ secrets.REGISTRY_USERNAME }}
+            password: ${{ secrets.REGISTRY_PASSWORD }} 
+            
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: starter/frontend
+          push: true
+          tags: nguyennhalunar/my-frontend-app:latest
