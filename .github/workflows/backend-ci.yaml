@@ -104,4 +104,4 @@ jobs:
         with:
           context: starter/backend
           push: true
-          tags: nguyennhalunar/my-backend-app:latest
+          tags: sleizi/my-backend-app:latest
