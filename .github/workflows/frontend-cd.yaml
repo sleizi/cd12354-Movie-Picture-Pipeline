@@ -9,7 +9,7 @@ on:
 
 env:
   NODE_VERSION: '18.x'
-  REACT_APP_MOVIE_API_URL: 'ae59a76a10f674699bb8c203588c939a-173833797.us-east-1.elb.amazonaws.com'
+  REACT_APP_MOVIE_API_URL: 'der12d410f674699bb8c203588c45g2-173832314.us-east-1.elb.amazonaws.com'
 
 jobs:
   lint:
