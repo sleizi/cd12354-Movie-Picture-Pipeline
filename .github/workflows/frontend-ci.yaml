@@ -127,4 +127,4 @@ jobs:
         with:
           context: starter/frontend
           push: true
-          tags: tunx7/my-frontend-app:latest
+          tags: sleizi/my-frontend-app:latest
