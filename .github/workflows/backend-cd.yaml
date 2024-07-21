@@ -88,9 +88,18 @@ jobs:
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:${GITHUB_SHA}
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:latest
 
+      - name: Install AWS IAM Authenticator
+        run: |
+          curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.16.8/2020-06-18/bin/linux/amd64/aws-iam-authenticator
+          chmod +x ./aws-iam-authenticator
+          mv aws-iam-authenticator /usr/local/bin
+
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig --name cluster --region us-east-1
+
+      - name: Print kubeconfig
+        run: cat ~/.kube/config
 
       - name: Set image tag
         run: |
@@ -106,4 +115,5 @@ jobs:
         run: |
           cd starter/backend/k8s
           kubectl get svc -A
+
  
