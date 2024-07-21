@@ -103,8 +103,4 @@ jobs:
         run: |
           cd starter/frontend/k8s
           kustomize build | kubectl apply -f -
-      
-      - name: Display application URLs (Debugging)
-        run: |
-          kubectl get svc -A
-          echo "The backend service URL is: ${{ env.be_service_url }}"
+
