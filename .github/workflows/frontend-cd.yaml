@@ -76,7 +76,15 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
+      
+      - name: Display application URLs
+        id: get_be_service_url
+        run: |
+          cd starter/frontend/k8s
+          kubectl get svc -A
+          export BE_SERVICE_URL=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "be_service_url=${BE_SERVICE_URL}" >> $GITHUB_ENV
+      
       - name: Build, tag, and push image to Amazon ECR
         working-directory: starter/frontend
         env:
@@ -102,14 +110,7 @@ jobs:
           cd starter/frontend/k8s
           kustomize build | kubectl apply -f -
       
-      - name: Display application URLs
-        id: get_be_service_url
-        run: |
-          cd starter/frontend/k8s
-          kubectl get svc -A
-          export BE_SERVICE_URL=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "be_service_url=${BE_SERVICE_URL}" >> $GITHUB_ENV
-          
       - name: Display application URLs (Debugging)
         run: |
+          kubectl get svc -A
           echo "The backend service URL is: ${{ env.be_service_url }}"
