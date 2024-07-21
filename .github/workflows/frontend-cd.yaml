@@ -3,59 +3,57 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+        - main
     paths:
       - 'starter/frontend/**'
-
+    
 env:
   NODE_VERSION: '18.x'
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [ 18.14.2-alpine3.17 ]
     defaults:
-      run:
-        working-directory: starter/frontend
+        run:
+          working-directory: starter/frontend
+
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+    - name: Check out repository
+      uses: actions/checkout@v3
 
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{env.NODE_VERSION}}
-          cache: 'npm'
-          cache-dependency-path: "starter/frontend/package-lock.json"
-
-      - name: Lint
-        run: |
-          npm ci
-          npm run lint
+    - name: Use Node.js 
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{env.NODE_VERSION}}
+        cache: 'npm'
+        cache-dependency-path: "starter/frontend/package-lock.json"
+        
+    - name: Lint
+      run: | 
+        npm ci
+        npm run lint
 
   test:
     runs-on: ubuntu-latest
     defaults:
-      run:
-        working-directory: starter/frontend
+        run:
+          working-directory: starter/frontend
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+    - name: Check out repository
+      uses: actions/checkout@v3
 
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{env.NODE_VERSION}}
-          cache: 'npm'
-          cache-dependency-path: "starter/frontend/package-lock.json"
-
-      - name: Test
-        run: |
-          npm ci
-          npm run test 
+    - name: Use Node.js 
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{env.NODE_VERSION}}
+        cache: 'npm'
+        cache-dependency-path: "starter/frontend/package-lock.json"
+        
+    - name: Test
+      run: | 
+        npm ci
+        npm run test 
 
   deploy:
     runs-on: ubuntu-latest
@@ -77,35 +75,25 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Build, tag, and push image to Amazon ECR
+        working-directory: starter/frontend
+        env:
+          REACT_APP_MOVIE_API_URL: ${{ vars.REACT_APP_MOVIE_API_URL }}
+        run: |
+          docker build --build-arg REACT_APP_MOVIE_API_URL=${REACT_APP_MOVIE_API_URL} -t frontend .
+          docker tag frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig --name cluster --region us-east-1
 
-      - name: Display application URLs
-        id: get_be_service_url
-        run: |
-          cd starter/frontend/k8s
-          kubectl get svc -A
-          BE_SERVICE_URL=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "BE_SERVICE_URL=${BE_SERVICE_URL}"
-          echo "::set-output name=be_service_url::${BE_SERVICE_URL}"
-
-      - name: Build, tag, and push image to Amazon ECR
-        working-directory: starter/frontend
-        run: |
-          echo "Using BE_SERVICE_URL=${{ steps.get_be_service_url.outputs.be_service_url }}"
-          docker build --build-arg REACT_APP_MOVIE_API_URL=${{ steps.get_be_service_url.outputs.be_service_url }} -t frontend:${GITHUB_SHA} .
-          docker tag frontend:${GITHUB_SHA} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:${GITHUB_SHA}
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:${GITHUB_SHA}
-
-
       - name: Set image tag and apply to cluster
         run: |
           cd starter/frontend/k8s
-          kustomize edit set image frontend=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:${GITHUB_SHA}
-      
-      - name: Apply to cluster
+          kustomize edit set image frontend=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+          kustomize build | kubectl apply -f -
+      - name: Display application URLs        
         run: |
           cd starter/frontend/k8s
-          kustomize build | kubectl apply -f -
-
+          kubectl get svc -A
