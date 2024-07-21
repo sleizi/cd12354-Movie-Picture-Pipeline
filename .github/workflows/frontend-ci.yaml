@@ -10,9 +10,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'starter/frontend'
   pull_request:
     branches:
       - main
+    paths:
+      - 'starter/frontend'
 
 jobs:
   LINT-JOB:
@@ -89,6 +93,8 @@ jobs:
     needs: 
       - LINT-JOB
       - TEST-JOB
+
+    environment: REACT_APP_MOVIE_API_URL
     
     steps:
       - uses: actions/checkout@v3
@@ -127,4 +133,5 @@ jobs:
         with:
           context: starter/frontend
           push: true
+          build-args: REACT_APP_MOVIE_API_URL=${{ vars.REACT_APP_MOVIE_API_URL }}
           tags: sleizi/my-frontend-app:latest
