@@ -96,11 +96,13 @@ jobs:
         run: |
           cd starter/backend/k8s
           kustomize edit set image backend=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:${GITHUB_SHA}
-      - name:  Apply to cluster        
+
+      - name: Apply to cluster        
         run: |
           cd starter/backend/k8s
-          kustomize build | kubectl apply -f -
-      - name:  Display application URLs        
+          kustomize build | kubectl apply --validate=false -f -
+
+      - name: Display application URLs        
         run: |
           cd starter/backend/k8s
           kubectl get svc -A
