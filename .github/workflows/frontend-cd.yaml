@@ -9,7 +9,6 @@ on:
 
 env:
   NODE_VERSION: '18.x'
-  REACT_APP_MOVIE_API_URL: 'a900ab799661a4b5491a82dbac88ffd1-1459188394.us-east-1.elb.amazonaws.com'
 
 jobs:
   lint:
@@ -80,6 +79,8 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         working-directory: starter/frontend
+        env:
+          REACT_APP_MOVIE_API_URL: ${{ steps.get_be_service_url.outputs.be_service_url }}
         run: |
           docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.REACT_APP_MOVIE_API_URL }} -t frontend:${GITHUB_SHA} .
           docker tag frontend:${GITHUB_SHA} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:${GITHUB_SHA}
@@ -95,11 +96,20 @@ jobs:
         run: |
           cd starter/frontend/k8s
           kustomize edit set image frontend=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:${GITHUB_SHA}
-      - name: apply to cluster
-        run:  |
-            cd starter/frontend/k8s
-            kustomize build | kubectl apply -f -
-      - name:  Display application URLs        
+      
+      - name: Apply to cluster
+        run: |
+          cd starter/frontend/k8s
+          kustomize build | kubectl apply -f -
+      
+      - name: Display application URLs
+        id: get_be_service_url
         run: |
           cd starter/frontend/k8s
           kubectl get svc -A
+          export BE_SERVICE_URL=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "be_service_url=${BE_SERVICE_URL}" >> $GITHUB_ENV
+          
+      - name: Display application URLs (Debugging)
+        run: |
+          echo "The backend service URL is: ${{ env.be_service_url }}"
