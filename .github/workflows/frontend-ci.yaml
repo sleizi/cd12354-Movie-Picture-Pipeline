@@ -93,8 +93,6 @@ jobs:
     needs: 
       - LINT-JOB
       - TEST-JOB
-
-    environment: REACT_APP_MOVIE_API_URL
     
     steps:
       - uses: actions/checkout@v3
@@ -133,5 +131,4 @@ jobs:
         with:
           context: starter/frontend
           push: true
-          build-args: REACT_APP_MOVIE_API_URL=${{ vars.REACT_APP_MOVIE_API_URL }}
           tags: sleizi/my-frontend-app:latest

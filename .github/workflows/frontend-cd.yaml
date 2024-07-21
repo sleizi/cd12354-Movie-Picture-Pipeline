@@ -94,9 +94,7 @@ jobs:
         run: |
           docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.be_service_url }} -t frontend:${GITHUB_SHA} .
           docker tag frontend:${GITHUB_SHA} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:${GITHUB_SHA}
-          docker tag frontend:${GITHUB_SHA} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:${GITHUB_SHA}
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
 
       - name: Set image tag and apply to cluster
         run: |
