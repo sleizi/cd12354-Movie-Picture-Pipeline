@@ -82,9 +82,9 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       working-directory: starter/backend
       run: |
-        docker build -t backend .
-        docker tag backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:latest
-        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:latest
+        docker build -t backend:${GITHUB_SHA} .
+        docker tag backend:${GITHUB_SHA} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:${GITHUB_SHA}
+        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:${GITHUB_SHA}
     
     - name: Configure kubectl
       run: |
@@ -93,7 +93,7 @@ jobs:
     - name: Set image tag and apply to cluster
       run: |
         cd starter/backend/k8s
-        kustomize edit set image backend=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:latest
+        kustomize edit set image backend=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:${GITHUB_SHA}
         kustomize build | kubectl apply -f -
     - name: Display application URLs        
       run: |
