@@ -95,7 +95,7 @@ jobs:
           IMAGE_TAG: latest
         run: |
           echo "Using BE_SERVICE_URL=${{ steps.get_be_service_url.outputs.be_service_url }}"
-          docker build --build-arg REACT_APP_MOVIE_API_URL=http://${{ steps.get_be_service_url.outputs.be_service_url }} -t $ECR_REGISTRY/frontend:latest starter/frontend/
+          docker build --build-arg REACT_APP_MOVIE_API_URL=http://${{ steps.get_be_service_url.outputs.be_service_url }} -t $ECR_REGISTRY/frontend:latest .
           docker tag frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
 
